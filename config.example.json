@@ -1,0 +1,14 @@
+{
+  "target_api_url": "https://your-api-endpoint.com/api/prices",
+  "products": [
+    "Au99.99",
+    "Au99.95",
+    "Au100g",
+    "Ag99.99",
+    "Pt99.95"
+  ],
+  "schedule": {
+    "cron": "0 * * * *",
+    "description": "每小时执行一次"
+  }
+}
