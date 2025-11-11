@@ -52,8 +52,12 @@ class MetalPriceCollector:
     
     # 默认采集的产品列表
     DEFAULT_PRODUCTS = [
-        "Au99.99", "Au99.95", "Au100g",
-        "Ag99.99", "Pt99.95"
+        "Au99.99", "Au99.95", "Au99.5", "Au100g", 
+        "iAu99.99", "iAu100g", "iAu99.5", 
+        "Au(T+D)", "Au(T+N1)", "Au(T+N2)", 
+        "Ag99.99", "Ag(T+D)", 
+        "Pt99.95", "PGC30g", 
+        "NYAuTN06", "NYAuTN12"
     ]
     
     def __init__(self, target_api_url: Optional[str] = None):
