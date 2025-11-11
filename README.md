@@ -245,6 +245,10 @@ def save_to_file(self, data: Dict):
         json.dump(data, f, ensure_ascii=False, indent=2)
 ```
 
+```bash
+Au99.99,Au99.95,Au99.5,Au100g,iAu99.99,iAu100g,iAu99.5,Au(T+D),Au(T+N1),Au(T+N2),Ag99.99,Ag(T+D),Pt99.95,PGC30g,NYAuTN06,NYAuTN12
+```
+
 ## 许可证
 
 MIT License
@@ -256,3 +260,4 @@ MIT License
 ## 联系方式
 
 如有问题，请提交 Issue 或联系维护者。
+
