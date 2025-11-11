@@ -11,7 +11,7 @@ on:
       products:
         description: '要采集的产品代码（逗号分隔）'
         required: false
-        default: 'Au99.99,Au99.95,Au100g,Ag99.99,Pt99.95'
+        default: 'Au99.99,Au99.95,Au99.5,Au100g,iAu99.99,iAu100g,iAu99.5,Au(T+D),Au(T+N1),Au(T+N2),Ag99.99,Ag(T+D),Pt99.95,PGC30g,NYAuTN06,NYAuTN12'
 
 jobs:
   collect:
@@ -37,7 +37,7 @@ jobs:
           # 从GitHub Secrets中读取目标API地址
           TARGET_API_URL: ${{ secrets.TARGET_API_URL }}
           # 产品列表（可选，不设置则使用默认列表）
-          PRODUCTS: ${{ github.event.inputs.products || 'Au99.99,Au99.95,Au100g,Ag99.99,Pt99.95' }}
+          PRODUCTS: ${{ github.event.inputs.products || 'Au99.99,Au99.95,Au99.5,Au100g,iAu99.99,iAu100g,iAu99.5,Au(T+D),Au(T+N1),Au(T+N2),Ag99.99,Ag(T+D),Pt99.95,PGC30g,NYAuTN06,NYAuTN12' }}
         run: |
           python collector.py
       
