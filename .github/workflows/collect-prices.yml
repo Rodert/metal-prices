@@ -1,9 +1,11 @@
 name: Collect Metal Prices
 
 on:
-  # 定时任务：每小时执行一次
+  # 定时任务：东八区交易时间执行（凌晨5点到下午16点）
+  # UTC时间21点到次日8点对应东八区凌晨5点到下午16点
   schedule:
-    - cron: '0 * * * *'  # 每小时的第0分钟执行
+    - cron: '0 21-23 * * *'  # UTC 21:00-23:00 (东八区 05:00-07:00)
+    - cron: '0 0-7 * * *'    # UTC 00:00-07:00 (东八区 08:00-15:00)
   
   # 允许手动触发
   workflow_dispatch:
@@ -12,6 +14,11 @@ on:
         description: '要采集的产品代码（逗号分隔）'
         required: false
         default: 'Au99.99,Au99.95,Au99.5,Au100g,iAu99.99,iAu100g,iAu99.5,Au(T+D),Au(T+N1),Au(T+N2),Ag99.99,Ag(T+D),Pt99.95,PGC30g,NYAuTN06,NYAuTN12'
+      force_run:
+        description: '强制执行（忽略时间限制）'
+        required: false
+        type: boolean
+        default: false
 
 jobs:
   collect:
@@ -21,28 +28,60 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
       
+      - name: Check trading hours
+        id: check_time
+        run: |
+          # 获取东八区当前时间
+          current_hour=$(TZ='Asia/Shanghai' date +%H)
+          echo "当前东八区时间: $(TZ='Asia/Shanghai' date '+%Y-%m-%d %H:%M:%S')"
+          echo "当前小时: $current_hour"
+          
+          # 检查是否在非交易时间（16点到次日5点）
+          if [ "$current_hour" -ge 16 ] || [ "$current_hour" -lt 5 ]; then
+            if [ "${{ github.event.inputs.force_run }}" = "true" ]; then
+              echo "非交易时间，但强制执行已启用"
+              echo "should_run=true" >> $GITHUB_OUTPUT
+            else
+              echo "当前为非交易时间，跳过采集"
+              echo "should_run=false" >> $GITHUB_OUTPUT
+            fi
+          else
+            echo "当前为交易时间，继续执行"
+            echo "should_run=true" >> $GITHUB_OUTPUT
+          fi
+      
       - name: Set up Python
+        if: steps.check_time.outputs.should_run == 'true'
         uses: actions/setup-python@v5
         with:
           python-version: '3.11'
           cache: 'pip'
       
       - name: Install dependencies
+        if: steps.check_time.outputs.should_run == 'true'
         run: |
           python -m pip install --upgrade pip
           pip install -r requirements.txt
       
       - name: Run collector
+        if: steps.check_time.outputs.should_run == 'true'
         env:
           # 从GitHub Secrets中读取目标API地址
           TARGET_API_URL: ${{ secrets.TARGET_API_URL }}
           # 产品列表（可选，不设置则使用默认列表）
-          PRODUCTS: ${{ github.event.inputs.products || 'Au99.99,Au99.95,Au99.5,Au100g,iAu99.99,iAu100g,iAu99.5,Au(T+D),Au(T+N1),Au(T+N2),Ag99.99,Ag(T+D),Pt99.95,PGC30g,NYAuTN06,NYAuTN12' }}
+          PRODUCTS: ${{ github.event.inputs.products || 'Au99.99,Au99.95,Au100g,Ag99.99,Pt99.95' }}
         run: |
           python collector.py
       
+      - name: Skip notification
+        if: steps.check_time.outputs.should_run == 'false'
+        run: |
+          echo "⏰ 当前为非交易时间，已跳过价格采集"
+          echo "📅 交易时间: 东八区 05:00-16:00"
+          echo "🔧 如需强制执行，请手动触发工作流并启用'强制执行'选项"
+      
       - name: Upload logs (on failure)
-        if: failure()
+        if: failure() && steps.check_time.outputs.should_run == 'true'
         uses: actions/upload-artifact@v4
         with:
           name: collection-logs-${{ github.run_number }}
